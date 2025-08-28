@@ -1,0 +1,73 @@
+receivers:
+  jmx/activemq:
+    jar_path: /otel/opentelemetry-jmx-scraper.jar
+    target_system: activemq
+    endpoint: service:jmx:rmi:///jndi/rmi://activemq:1099/jmxrmi
+    collection_interval: 59s
+    otlp:
+      timeout: 30s
+    # 60s
+    # otel.java.metrics.cardinality.limit: 10000
+    # export OTEL_JAVA_METRICS_CARDINALITY_LIMIT=20000
+    # export OTEL_METRICS_EXPORT_INTERAL=60
+
+  # jmx/activemq-1:
+  #   jar_path: /otel/opentelemetry-jmx-scraper.jar
+  #   target_system: activemq
+  #   endpoint: service:jmx:rmi:///jndi/rmi://activemq:1099/jmxrmi
+  #   collection_interval: 59s
+  #   otlp:
+  #     timeout: 30s
+
+  # jmx/activemq2:
+  #   jar_path: /opt/opentelemetry-jmx-metrics.jar
+  #   target_system: activemq
+  #   endpoint: service:jmx:rmi:///jndi/rmi://192.168.1.11:1099/jmxrmi
+  #   collection_interval: 30s
+  #   initial_delay: 10s
+  #   log_level: info
+  #   jmx_configs: /etc/otel/metrics.yaml
+
+  # jmx/activemq3:
+  #   jar_path: /opt/opentelemetry-jmx-metrics.jar
+  #   target_system: activemq
+  #   endpoint: service:jmx:rmi:///jndi/rmi://192.168.1.11:1099/jmxrmi
+  #   collection_interval: 30s
+
+# processors:
+#   filter/activemq:
+#     metrics:
+#       exclude:
+#         match_type: strict
+#         metric_names:
+#           - "activemq.connection.count"
+#           - "activemq.consumer.count"
+#           - "activemq.memory.usage"
+#           - "activemq.message.expired"
+#           - "activemq.message.current"
+#           - "activemq.disk.store_usage"
+#           - "activemq.message.wait_time.avg"
+#           - "activemq.disk.temp_usage"
+
+processors:
+  batch:
+    timeout: 5s
+    send_batch_size: 10
+
+exporters:
+#   prometheus:
+#     endpoint: "0.0.0.0:9464"
+  prometheusremotewrite:
+    endpoint: "http://victoriametrics:8428/api/v1/write"
+  # debug:
+  #   verbosity: detailed
+
+service:
+  telemetry:
+    logs:
+      level: debug 
+  pipelines:
+    metrics/activemq1:
+      receivers: [jmx/activemq]
+      processors: [batch]
+      exporters: [prometheusremotewrite]
